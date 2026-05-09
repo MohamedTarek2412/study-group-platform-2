@@ -1,0 +1,137 @@
+version: '3.8'
+
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    networks: [studygroup-net]
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    depends_on: [zookeeper]
+    ports: ["9092:9092"]
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    networks: [studygroup-net]
+
+  auth-db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: auth_db
+      POSTGRES_USER: auth_user
+      POSTGRES_PASSWORD: auth_pass
+    volumes: 
+      - auth-data:/var/lib/postgresql/data
+      - ./auth-service/src/main/resources/01-create-user.sql:/docker-entrypoint-initdb.d/01-create-user.sql
+      - ./auth-service/src/main/resources/schema.sql:/docker-entrypoint-initdb.d/02-schema.sql
+    networks: [studygroup-net]
+
+  user-db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: user_db
+      POSTGRES_USER: user_user
+      POSTGRES_PASSWORD: user_pass
+    volumes: 
+      - user-data:/var/lib/postgresql/data
+      - ./user-service/src/main/resources/01-create-user.sql:/docker-entrypoint-initdb.d/01-create-user.sql
+      - ./user-service/src/main/resources/schema.sql:/docker-entrypoint-initdb.d/02-schema.sql
+    networks: [studygroup-net]
+
+  group-db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: group_db
+      POSTGRES_USER: group_user
+      POSTGRES_PASSWORD: group_pass
+    volumes: 
+      - group-data:/var/lib/postgresql/data
+      - ./group-service/src/main/resources/01-create-user.sql:/docker-entrypoint-initdb.d/01-create-user.sql
+      - ./group-service/src/main/resources/schema.sql:/docker-entrypoint-initdb.d/02-schema.sql
+    networks: [studygroup-net]
+
+  discussion-db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: discussion_db
+      POSTGRES_USER: disc_user
+      POSTGRES_PASSWORD: disc_pass
+    volumes: 
+      - discussion-data:/var/lib/postgresql/data
+      - ./discussion-service/src/main/resources/01-create-user.sql:/docker-entrypoint-initdb.d/01-create-user.sql
+      - ./discussion-service/src/main/resources/schema.sql:/docker-entrypoint-initdb.d/02-schema.sql
+    networks: [studygroup-net]
+
+  api-gateway:
+    build: ./api-gateway
+    ports: ["8080:8080"]
+    depends_on: [auth-service, user-service, group-service, discussion-service]
+    environment:
+      AUTH_SERVICE_URL: http://auth-service:8081
+      USER_SERVICE_URL: http://user-service:8082
+      GROUP_SERVICE_URL: http://group-service:8083
+      DISCUSSION_SERVICE_URL: http://discussion-service:8084
+    networks: [studygroup-net]
+
+  auth-service:
+    build: ./auth-service
+    depends_on: [auth-db, kafka]
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://auth-db:5432/auth_db
+      SPRING_DATASOURCE_USERNAME: auth_user
+      SPRING_DATASOURCE_PASSWORD: auth_pass
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      JWT_SECRET: ${JWT_SECRET:-your-secret-key-here}
+    networks: [studygroup-net]
+
+  user-service:
+    build: ./user-service
+    depends_on: [user-db, kafka]
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://user-db:5432/user_db
+      SPRING_DATASOURCE_USERNAME: user_user
+      SPRING_DATASOURCE_PASSWORD: user_pass
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    networks: [studygroup-net]
+
+  group-service:
+    build: ./group-service
+    depends_on: [group-db, kafka]
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://group-db:5432/group_db
+      SPRING_DATASOURCE_USERNAME: group_user
+      SPRING_DATASOURCE_PASSWORD: group_pass
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    networks: [studygroup-net]
+
+  discussion-service:
+    build: ./discussion-service
+    depends_on: [discussion-db, kafka]
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://discussion-db:5432/discussion_db
+      SPRING_DATASOURCE_USERNAME: disc_user
+      SPRING_DATASOURCE_PASSWORD: disc_pass
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    networks: [studygroup-net]
+
+  frontend:
+    build: ./frontend
+    ports: ["3000:3000"]
+    environment:
+      REACT_APP_API_URL: http://localhost:8080
+    networks: [studygroup-net]
+
+networks:
+  studygroup-net:
+    driver: bridge
+
+volumes:
+  auth-data:
+  user-data:
+  group-data:
+  discussion-data:
