@@ -44,11 +44,12 @@ public class JwtAuthFilter implements GlobalFilter, Ordered, InitializingBean {
             return chain.filter(exchange);
         }
 
+        if (isPublicEndpoint(path, method)) {
+            return chain.filter(exchange);
+        }
+
         String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
         if (authHeader == null || authHeader.isBlank()) {
-            if (isPublicEndpoint(path, method)) {
-                return chain.filter(exchange);
-            }
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
         }
