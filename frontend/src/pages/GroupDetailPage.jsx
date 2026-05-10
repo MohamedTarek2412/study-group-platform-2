@@ -27,16 +27,20 @@ const GroupDetailPage = () => {
   useEffect(() => {
     const loadGroupDetails = async () => {
       setLoading(true);
-      await Promise.all([
-        fetchGroupDetails(),
-        fetchPosts(),
-        fetchMaterials()
-      ]);
+      const requests = [fetchGroupDetails()];
+      if (user) {
+        requests.push(fetchPosts(), fetchMaterials());
+      } else {
+        setPosts([]);
+        setMaterials([]);
+        setMessage('Log in and join this group to view discussions and materials.');
+      }
+      await Promise.all(requests);
       setLoading(false);
     };
 
     loadGroupDetails();
-  }, [id]);
+  }, [id, user]);
 
   const fetchGroupDetails = async () => {
     try {

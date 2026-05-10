@@ -43,7 +43,7 @@ const AdminPage = () => {
   const handleApproveCreator = async (userId) => {
     try {
       await userApi.approveCreator(userId);
-      setPendingCreators(pendingCreators.filter(c => c.id !== userId));
+      setPendingCreators(pendingCreators.filter(c => c.userId !== userId));
     } catch (error) {
       alert('Failed to approve creator');
     }
@@ -52,7 +52,7 @@ const AdminPage = () => {
   const handleRejectCreator = async (userId) => {
     try {
       await userApi.rejectCreator(userId);
-      setPendingCreators(pendingCreators.filter(c => c.id !== userId));
+      setPendingCreators(pendingCreators.filter(c => c.userId !== userId));
     } catch (error) {
       alert('Failed to reject creator');
     }
