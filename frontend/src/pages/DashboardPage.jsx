@@ -12,13 +12,24 @@ const DashboardPage = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user) {
-      fetchUserData();
-      fetchMyGroups();
-      if (user.role === 'CREATOR') {
-        fetchPendingRequests();
-      }
+    if (!user) {
+      setLoading(false);
+      return;
     }
+
+    const loadDashboard = async () => {
+      try {
+        await fetchUserData();
+        await fetchMyGroups();
+        if (user.role === 'CREATOR') {
+          await fetchPendingRequests();
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadDashboard();
   }, [user]);
 
   const fetchUserData = async () => {

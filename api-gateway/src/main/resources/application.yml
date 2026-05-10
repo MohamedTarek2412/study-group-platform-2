@@ -19,6 +19,14 @@ spring:
 jwt:
   secret: ${JWT_SECRET:this-is-a-very-secure-jwt-secret-key-that-is-at-least-256-bits-long-for-security-requirements}
 
+# Docker Compose hostnames (override in application-local.yml for localhost runs)
+studygroup:
+  gateway:
+    discussion-uri: ${GATEWAY_DISCUSSION_URI:http://discussion-service:8084}
+    auth-uri: ${GATEWAY_AUTH_URI:http://auth-service:8081}
+    user-uri: ${GATEWAY_USER_URI:http://user-service:8082}
+    group-uri: ${GATEWAY_GROUP_URI:http://group-service:8083}
+
 logging:
   level:
     org.springframework.cloud.gateway: DEBUG

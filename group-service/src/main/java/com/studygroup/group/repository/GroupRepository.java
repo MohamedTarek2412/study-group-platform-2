@@ -22,11 +22,11 @@ public interface GroupRepository extends JpaRepository<Group, UUID> {
 
     List<Group> findByStatus(String status);
 
-    @Query("SELECT g FROM Group g WHERE g.status = :status AND " +
+    @Query("SELECT g FROM StudyGroup g WHERE g.status = :status AND " +
            "(LOWER(g.name) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
            "LOWER(g.description) LIKE LOWER(CONCAT('%', :query, '%')))")
     List<Group> searchByNameOrDescription(@Param("query") String query, @Param("status") String status);
 
-    @Query("SELECT gm.userId FROM GroupMember gm WHERE gm.groupId = :groupId")
+    @Query("SELECT gm.id.userId FROM GroupMember gm WHERE gm.id.groupId = :groupId")
     List<UUID> findGroupMembers(@Param("groupId") UUID groupId);
 }

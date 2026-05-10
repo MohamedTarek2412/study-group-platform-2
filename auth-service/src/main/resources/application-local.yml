@@ -1,0 +1,15 @@
+# Run without Docker: disable Kafka, use local PostgreSQL (create auth_db first — see scripts/init-local-databases.sql)
+spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
+  datasource:
+    url: jdbc:postgresql://localhost:5432/auth_db
+    username: ${LOCAL_DB_USER:postgres}
+    password: ${LOCAL_DB_PASSWORD:postgres}
+
+studygroup:
+  user-service-url: http://localhost:8082
+
+jwt:
+  secret: ${JWT_SECRET:local-dev-jwt-secret-study-group-platform-min-32-characters-long}

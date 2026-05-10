@@ -2,9 +2,9 @@ package com.studygroup.group.controller;
 
 import com.studygroup.group.dto.CreateGroupRequest;
 import com.studygroup.group.dto.GroupDto;
+import com.studygroup.group.dto.PageResponse;
 import com.studygroup.group.service.GroupService;
 import jakarta.validation.Valid;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,8 +24,8 @@ public class GroupController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<GroupDto>> getAllGroups(Pageable pageable) {
-        return ResponseEntity.ok(groupService.getAllGroups(pageable));
+    public ResponseEntity<PageResponse<GroupDto>> getAllGroups(Pageable pageable) {
+        return ResponseEntity.ok(PageResponse.from(groupService.getAllGroups(pageable)));
     }
 
     @GetMapping("/{id}")

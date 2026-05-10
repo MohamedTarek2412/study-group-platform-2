@@ -1,6 +1,7 @@
 package com.studygroup.auth.controller;
 
 import com.studygroup.auth.dto.AuthResponse;
+import com.studygroup.auth.dto.AuthValidateResponse;
 import com.studygroup.auth.dto.LoginRequest;
 import com.studygroup.auth.dto.RegisterRequest;
 import com.studygroup.auth.service.AuthService;
@@ -34,8 +35,7 @@ public class AuthController {
     }
 
     @GetMapping("/validate")
-    public ResponseEntity<Void> validate(@RequestHeader("Authorization") String token) {
-        authService.validate(token);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<AuthValidateResponse> validate(@RequestHeader("Authorization") String token) {
+        return ResponseEntity.ok(authService.validateSession(token));
     }
 }

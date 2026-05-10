@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS join_requests (
 );
 
 CREATE TABLE IF NOT EXISTS group_members (
-    group_id UUID NOT NULL,
+    group_id UUID NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
     user_id UUID NOT NULL,
     joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (group_id, user_id)
@@ -34,15 +34,4 @@ CREATE INDEX IF NOT EXISTS idx_groups_status ON groups(status);
 CREATE INDEX IF NOT EXISTS idx_groups_creator ON groups(creator_id);
 CREATE INDEX IF NOT EXISTS idx_join_requests_group ON join_requests(group_id);
 CREATE INDEX IF NOT EXISTS idx_join_requests_student ON join_requests(student_id);
-
-CREATE INDEX idx_join_requests_status ON join_requests(status);
-
-CREATE TABLE group_members (
-    group_id    UUID NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
-    user_id     UUID NOT NULL,
-    joined_at   TIMESTAMP DEFAULT now(),
-    PRIMARY KEY (group_id, user_id)
-);
-
-CREATE INDEX idx_group_members_group_id ON group_members(group_id);
-CREATE INDEX idx_group_members_user_id ON group_members(user_id);
+CREATE INDEX IF NOT EXISTS idx_join_requests_status ON join_requests(status);

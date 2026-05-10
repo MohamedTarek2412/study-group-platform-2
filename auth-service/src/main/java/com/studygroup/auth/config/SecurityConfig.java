@@ -32,11 +32,11 @@ public class SecurityConfig {
                 // CORS disabled - handled by API Gateway
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("POST", "/auth/register").permitAll()
-                        .requestMatchers("POST", "/auth/login").permitAll()
-                        .requestMatchers("POST", "/auth/refresh").permitAll()
+                        .requestMatchers("POST", "/api/auth/register").permitAll()
+                        .requestMatchers("POST", "/api/auth/login").permitAll()
+                        .requestMatchers("POST", "/api/auth/refresh").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
-                        .requestMatchers("GET", "/auth/validate").hasRole("SYSTEM")
+                        .requestMatchers("GET", "/api/auth/validate").authenticated()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)

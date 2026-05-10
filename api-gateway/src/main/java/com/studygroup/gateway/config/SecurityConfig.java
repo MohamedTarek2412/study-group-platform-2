@@ -23,6 +23,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeExchange(auth -> auth
                         .pathMatchers("/api/auth/register", "/api/auth/login", "/api/auth/refresh").permitAll()
+                        .pathMatchers("GET", "/api/auth/validate").permitAll()
                         .pathMatchers("/actuator/**").permitAll()
                         .pathMatchers("GET", "/api/groups/**", "/api/users/**", "/api/posts/**", "/api/materials/**").permitAll()
                         .anyExchange().authenticated()

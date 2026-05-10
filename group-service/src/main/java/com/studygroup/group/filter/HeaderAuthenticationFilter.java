@@ -3,7 +3,6 @@ package com.studygroup.group.filter;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import jakarta.servlet.FilterChain;
@@ -14,7 +13,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-@Component
 public class HeaderAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
@@ -24,7 +22,7 @@ public class HeaderAuthenticationFilter extends OncePerRequestFilter {
         String userId = request.getHeader("X-User-Id");
         String userRole = request.getHeader("X-User-Role");
         
-        if (userId != null && userRole != null) {
+        if (userId != null && userRole != null && !userRole.isBlank()) {
             List<SimpleGrantedAuthority> authorities = new ArrayList<>();
             authorities.add(new SimpleGrantedAuthority("ROLE_" + userRole));
             

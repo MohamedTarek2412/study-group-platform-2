@@ -1,8 +1,8 @@
 package com.studygroup.gateway.filter;
 
+import com.studygroup.gateway.security.JwtSigningKeys;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
@@ -24,20 +24,27 @@ public class JwtAuthFilter implements GlobalFilter, Ordered, InitializingBean {
     @Value("${jwt.secret:this-is-a-very-secure-jwt-secret-key-that-is-at-least-256-bits-long-for-security-requirements}")
     private String jwtSecret;
 
-    private SecretKey key;
+    private SecretKey signingKey;
 
     @Override
     public void afterPropertiesSet() {
-        this.key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+        this.signingKey = JwtSigningKeys.hmacSha256FromSecret(jwtSecret);
     }
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         ServerHttpRequest request = exchange.getRequest();
         String path = request.getURI().getPath();
-        String method = request.getMethod().toString();
+        String method = request.getMethod() != null ? request.getMethod().toString() : "";
 
-        // Skip authentication for public endpoints
+        if ("OPTIONS".equals(method)) {
+            return chain.filter(exchange);
+        }
+
+        if ("GET".equals(method) && "/api/auth/validate".equals(path)) {
+            return chain.filter(exchange);
+        }
+
         if (isPublicEndpoint(path, method)) {
             return chain.filter(exchange);
         }
@@ -51,19 +58,22 @@ public class JwtAuthFilter implements GlobalFilter, Ordered, InitializingBean {
         String token = authHeader.substring(7);
         try {
             Claims claims = Jwts.parser()
-                    .setSigningKey(key)
+                    .verifyWith(signingKey)
                     .build()
-                    .parseClaimsJws(token)
-                    .getBody();
+                    .parseSignedClaims(token)
+                    .getPayload();
 
-            String userId = claims.getSubject();
+            String userId = claims.get("userId", String.class);
+            if (userId == null || userId.isBlank()) {
+                userId = claims.getSubject();
+            }
             String role = claims.get("role", String.class);
 
-            // Add user info to headers for downstream services
-            ServerHttpRequest modifiedRequest = request.mutate()
-                    .header("X-User-Id", userId)
-                    .header("X-User-Role", role)
-                    .build();
+            ServerHttpRequest.Builder rb = request.mutate().header("X-User-Id", userId);
+            if (role != null && !role.isBlank()) {
+                rb.header("X-User-Role", role);
+            }
+            ServerHttpRequest modifiedRequest = rb.build();
 
             return chain.filter(exchange.mutate().request(modifiedRequest).build());
 
@@ -74,26 +84,19 @@ public class JwtAuthFilter implements GlobalFilter, Ordered, InitializingBean {
     }
 
     private boolean isPublicEndpoint(String path, String method) {
-        // Auth endpoints
-        if (path.equals("/api/auth/register") || path.equals("/api/auth/login") || 
-            path.equals("/api/auth/refresh")) {
+        if (path.equals("/api/auth/register") || path.equals("/api/auth/login")
+                || path.equals("/api/auth/refresh")) {
             return true;
         }
-        
-        // Public GET endpoints
+
         if ("GET".equals(method)) {
-            if (path.startsWith("/api/groups") || path.startsWith("/api/users") ||
-                path.startsWith("/api/posts") || path.startsWith("/api/materials")) {
+            if (path.startsWith("/api/groups") || path.startsWith("/api/users")
+                    || path.startsWith("/api/posts") || path.startsWith("/api/materials")) {
                 return true;
             }
         }
-        
-        // Actuator
-        if (path.startsWith("/actuator")) {
-            return true;
-        }
-        
-        return false;
+
+        return path.startsWith("/actuator");
     }
 
     @Override

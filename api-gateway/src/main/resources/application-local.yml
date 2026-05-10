@@ -1,0 +1,10 @@
+# Route to JVM services on localhost (start each service with --spring.profiles.active=local)
+studygroup:
+  gateway:
+    discussion-uri: http://localhost:8084
+    auth-uri: http://localhost:8081
+    user-uri: http://localhost:8082
+    group-uri: http://localhost:8083
+
+jwt:
+  secret: ${JWT_SECRET:local-dev-jwt-secret-study-group-platform-min-32-characters-long}
