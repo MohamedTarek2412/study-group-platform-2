@@ -42,4 +42,19 @@ public class MembershipConsumer {
             logger.error("Error processing request approved event: {}", e.getMessage(), e);
         }
     }
+
+    @KafkaListener(topics = "group-created", groupId = "discussion-service")
+    public void handleGroupCreated(String message) {
+        try {
+            JsonNode jsonNode = objectMapper.readTree(message);
+            UUID groupId = UUID.fromString(jsonNode.get("groupId").asText());
+            UUID creatorId = UUID.fromString(jsonNode.get("creatorId").asText());
+
+            groupMemberService.addCreatorToCache(groupId, creatorId);
+
+            logger.info("Added group creator to cache - Group: {}, Creator: {}", groupId, creatorId);
+        } catch (Exception e) {
+            logger.error("Error processing group created event: {}", e.getMessage(), e);
+        }
+    }
 }

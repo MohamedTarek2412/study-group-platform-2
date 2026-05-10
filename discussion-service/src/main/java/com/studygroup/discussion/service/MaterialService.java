@@ -11,7 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -19,10 +18,14 @@ public class MaterialService {
 
     private final MaterialRepository materialRepository;
     private final GroupMemberRepository groupMemberRepository;
+    private final GroupMemberService groupMemberService;
 
-    public MaterialService(MaterialRepository materialRepository, GroupMemberRepository groupMemberRepository) {
+    public MaterialService(MaterialRepository materialRepository,
+                           GroupMemberRepository groupMemberRepository,
+                           GroupMemberService groupMemberService) {
         this.materialRepository = materialRepository;
         this.groupMemberRepository = groupMemberRepository;
+        this.groupMemberService = groupMemberService;
     }
 
     public Page<MaterialDto> getMaterials(UUID groupId, Pageable pageable) {
@@ -59,9 +62,7 @@ public class MaterialService {
     }
 
     public boolean isGroupCreator(UUID groupId, UUID userId) {
-        // This would typically call group service to verify
-        // For now, we'll assume group creators are also members
-        return isGroupMember(groupId, userId);
+        return groupMemberService.isCreator(groupId, userId);
     }
 
     private MaterialDto convertToDto(Material material) {

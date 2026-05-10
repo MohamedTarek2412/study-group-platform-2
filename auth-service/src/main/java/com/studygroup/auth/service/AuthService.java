@@ -53,11 +53,13 @@ public class AuthService {
         user.setEmail(request.getEmail());
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         
-        // Use role from request, default to STUDENT if not provided
         Role role = Role.STUDENT;
         try {
             role = Role.valueOf(request.getRole().toUpperCase());
         } catch (IllegalArgumentException e) {
+            role = Role.STUDENT;
+        }
+        if (role == Role.ADMIN) {
             role = Role.STUDENT;
         }
         user.setRole(role);
@@ -96,7 +98,13 @@ public class AuthService {
         }
 
         String token = refreshToken.substring(7);
-        String email = jwtService.extractEmail(token);
+        Claims claims = jwtService.parseAccessTokenClaims(token);
+        String tokenType = claims.get("type", String.class);
+        if (!"refresh".equals(tokenType)) {
+            throw new IllegalArgumentException("Invalid refresh token");
+        }
+
+        String email = claims.getSubject();
         
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));

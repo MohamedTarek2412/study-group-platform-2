@@ -16,10 +16,13 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;
+import java.util.regex.Pattern;
 
 @Component
 public class JwtAuthFilter implements GlobalFilter, Ordered, InitializingBean {
+
+    private static final Pattern UUID_PATH_SEGMENT = Pattern.compile(
+            "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}");
 
     @Value("${jwt.secret:this-is-a-very-secure-jwt-secret-key-that-is-at-least-256-bits-long-for-security-requirements}")
     private String jwtSecret;
@@ -41,16 +44,16 @@ public class JwtAuthFilter implements GlobalFilter, Ordered, InitializingBean {
             return chain.filter(exchange);
         }
 
-        if ("GET".equals(method) && "/api/auth/validate".equals(path)) {
-            return chain.filter(exchange);
-        }
-
-        if (isPublicEndpoint(path, method)) {
-            return chain.filter(exchange);
-        }
-
         String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        if (authHeader == null || authHeader.isBlank()) {
+            if (isPublicEndpoint(path, method)) {
+                return chain.filter(exchange);
+            }
+            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+            return exchange.getResponse().setComplete();
+        }
+
+        if (!authHeader.startsWith("Bearer ")) {
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
         }
@@ -90,13 +93,26 @@ public class JwtAuthFilter implements GlobalFilter, Ordered, InitializingBean {
         }
 
         if ("GET".equals(method)) {
-            if (path.startsWith("/api/groups") || path.startsWith("/api/users")
-                    || path.startsWith("/api/posts") || path.startsWith("/api/materials")) {
+            if (path.equals("/api/groups") || path.equals("/api/groups/search")) {
+                return true;
+            }
+
+            if (isSingleResourcePath(path, "/api/groups/")
+                    || isSingleResourcePath(path, "/api/users/")) {
                 return true;
             }
         }
 
         return path.startsWith("/actuator");
+    }
+
+    private boolean isSingleResourcePath(String path, String prefix) {
+        if (!path.startsWith(prefix)) {
+            return false;
+        }
+
+        String id = path.substring(prefix.length());
+        return UUID_PATH_SEGMENT.matcher(id).matches();
     }
 
     @Override

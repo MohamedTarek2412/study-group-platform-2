@@ -23,12 +23,15 @@ public class PostService {
     private final PostRepository postRepository;
     private final ReplyRepository replyRepository;
     private final GroupMemberRepository groupMemberRepository;
+    private final GroupMemberService groupMemberService;
 
     public PostService(PostRepository postRepository, ReplyRepository replyRepository,
-                       GroupMemberRepository groupMemberRepository) {
+                       GroupMemberRepository groupMemberRepository,
+                       GroupMemberService groupMemberService) {
         this.postRepository = postRepository;
         this.replyRepository = replyRepository;
         this.groupMemberRepository = groupMemberRepository;
+        this.groupMemberService = groupMemberService;
     }
 
     public Page<PostDto> getPosts(UUID groupId, Pageable pageable) {
@@ -86,9 +89,7 @@ public class PostService {
     }
 
     public boolean isGroupCreator(UUID groupId, UUID userId) {
-        // This would typically call the group service to verify
-        // For now, we'll assume group creators are also members
-        return isGroupMember(groupId, userId);
+        return groupMemberService.isCreator(groupId, userId);
     }
 
     private PostDto convertToDto(Post post) {

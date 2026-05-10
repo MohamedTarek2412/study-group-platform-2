@@ -122,7 +122,6 @@ const RegisterForm = () => {
           >
             <option value="STUDENT">Student</option>
             <option value="CREATOR">Creator</option>
-            <option value="ADMIN">Admin</option>
           </select>
         </div>
 

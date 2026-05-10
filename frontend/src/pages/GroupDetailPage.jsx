@@ -18,9 +18,17 @@ const GroupDetailPage = () => {
   const [activeTab, setActiveTab] = useState('posts');
 
   useEffect(() => {
-    fetchGroupDetails();
-    fetchPosts();
-    fetchMaterials();
+    const loadGroupDetails = async () => {
+      setLoading(true);
+      await Promise.all([
+        fetchGroupDetails(),
+        fetchPosts(),
+        fetchMaterials()
+      ]);
+      setLoading(false);
+    };
+
+    loadGroupDetails();
   }, [id]);
 
   const fetchGroupDetails = async () => {
