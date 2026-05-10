@@ -16,6 +16,12 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
     networks: [studygroup-net]
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092 >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 30s
 
   auth-db:
     image: postgres:16
@@ -28,6 +34,11 @@ services:
       - ./auth-service/src/main/resources/01-create-user.sql:/docker-entrypoint-initdb.d/01-create-user.sql
       - ./auth-service/src/main/resources/schema.sql:/docker-entrypoint-initdb.d/02-schema.sql
     networks: [studygroup-net]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U auth_user -d auth_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   user-db:
     image: postgres:16
@@ -40,6 +51,11 @@ services:
       - ./user-service/src/main/resources/01-create-user.sql:/docker-entrypoint-initdb.d/01-create-user.sql
       - ./user-service/src/main/resources/schema.sql:/docker-entrypoint-initdb.d/02-schema.sql
     networks: [studygroup-net]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user_user -d user_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   group-db:
     image: postgres:16
@@ -52,6 +68,11 @@ services:
       - ./group-service/src/main/resources/01-create-user.sql:/docker-entrypoint-initdb.d/01-create-user.sql
       - ./group-service/src/main/resources/schema.sql:/docker-entrypoint-initdb.d/02-schema.sql
     networks: [studygroup-net]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U group_user -d group_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   discussion-db:
     image: postgres:16
@@ -64,22 +85,45 @@ services:
       - ./discussion-service/src/main/resources/01-create-user.sql:/docker-entrypoint-initdb.d/01-create-user.sql
       - ./discussion-service/src/main/resources/schema.sql:/docker-entrypoint-initdb.d/02-schema.sql
     networks: [studygroup-net]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U disc_user -d discussion_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   api-gateway:
     build: ./api-gateway
     ports: ["8080:8080"]
-    depends_on: [auth-service, user-service, group-service, discussion-service]
+    depends_on:
+      auth-service:
+        condition: service_healthy
+      user-service:
+        condition: service_healthy
+      group-service:
+        condition: service_healthy
+      discussion-service:
+        condition: service_healthy
     environment:
-      AUTH_SERVICE_URL: http://auth-service:8081
-      USER_SERVICE_URL: http://user-service:8082
-      GROUP_SERVICE_URL: http://group-service:8083
-      DISCUSSION_SERVICE_URL: http://discussion-service:8084
+      GATEWAY_AUTH_URI: http://auth-service:8081
+      GATEWAY_USER_URI: http://user-service:8082
+      GATEWAY_GROUP_URI: http://group-service:8083
+      GATEWAY_DISCUSSION_URI: http://discussion-service:8084
       JWT_SECRET: ${JWT_SECRET:-study-group-platform-dev-jwt-secret-change-me-in-production-min-32-chars}
     networks: [studygroup-net]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8080/actuator/health | grep -q UP"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
 
   auth-service:
     build: ./auth-service
-    depends_on: [auth-db, kafka]
+    depends_on:
+      auth-db:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://auth-db:5432/auth_db
       SPRING_DATASOURCE_USERNAME: auth_user
@@ -87,36 +131,72 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       JWT_SECRET: ${JWT_SECRET:-study-group-platform-dev-jwt-secret-change-me-in-production-min-32-chars}
     networks: [studygroup-net]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8081/actuator/health | grep -q UP"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
   user-service:
     build: ./user-service
-    depends_on: [user-db, kafka]
+    depends_on:
+      user-db:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://user-db:5432/user_db
       SPRING_DATASOURCE_USERNAME: user_user
       SPRING_DATASOURCE_PASSWORD: user_pass
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     networks: [studygroup-net]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8082/actuator/health | grep -q UP"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
   group-service:
     build: ./group-service
-    depends_on: [group-db, kafka]
+    depends_on:
+      group-db:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://group-db:5432/group_db
       SPRING_DATASOURCE_USERNAME: group_user
       SPRING_DATASOURCE_PASSWORD: group_pass
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     networks: [studygroup-net]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8083/actuator/health | grep -q UP"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
   discussion-service:
     build: ./discussion-service
-    depends_on: [discussion-db, kafka]
+    depends_on:
+      discussion-db:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://discussion-db:5432/discussion_db
       SPRING_DATASOURCE_USERNAME: disc_user
       SPRING_DATASOURCE_PASSWORD: disc_pass
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     networks: [studygroup-net]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:8084/actuator/health | grep -q UP"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
   frontend:
     build: ./frontend

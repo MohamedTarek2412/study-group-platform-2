@@ -2,12 +2,16 @@ package com.studygroup.auth.kafka;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 
 @Component
 public class UserEventProducer {
+
+    private static final Logger logger = LoggerFactory.getLogger(UserEventProducer.class);
 
     private final KafkaTemplate<String, String> kafkaTemplate;
 
@@ -21,6 +25,15 @@ public class UserEventProducer {
         }
         String message = String.format("{\"userId\":\"%s\",\"email\":\"%s\",\"eventType\":\"USER_REGISTERED\"}",
                 userId.toString(), email);
-        kafkaTemplate.send("user-registered", message);
+        try {
+            kafkaTemplate.send("user-registered", message)
+                    .whenComplete((result, ex) -> {
+                        if (ex != null) {
+                            logger.warn("Failed to publish user registered event for {}: {}", userId, ex.getMessage());
+                        }
+                    });
+        } catch (Exception e) {
+            logger.warn("Failed to enqueue user registered event for {}: {}", userId, e.getMessage());
+        }
     }
 }

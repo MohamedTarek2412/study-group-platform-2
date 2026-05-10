@@ -2,12 +2,16 @@ package com.studygroup.group.kafka;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 
 @Component
 public class GroupEventProducer {
+
+    private static final Logger logger = LoggerFactory.getLogger(GroupEventProducer.class);
 
     private final KafkaTemplate<String, String> kafkaTemplate;
 
@@ -21,7 +25,7 @@ public class GroupEventProducer {
         }
         String message = String.format("{\"groupId\":\"%s\",\"creatorId\":\"%s\",\"eventType\":\"GROUP_CREATED\"}",
                 groupId.toString(), creatorId.toString());
-        kafkaTemplate.send("group-created", message);
+        send("group-created", message);
     }
 
     public void publishJoinRequested(UUID groupId, UUID studentId) {
@@ -30,7 +34,7 @@ public class GroupEventProducer {
         }
         String message = String.format("{\"groupId\":\"%s\",\"studentId\":\"%s\",\"eventType\":\"JOIN_REQUESTED\"}",
                 groupId.toString(), studentId.toString());
-        kafkaTemplate.send("join-requested", message);
+        send("join-requested", message);
     }
 
     public void publishRequestApproved(UUID groupId, UUID studentId) {
@@ -39,6 +43,19 @@ public class GroupEventProducer {
         }
         String message = String.format("{\"groupId\":\"%s\",\"studentId\":\"%s\",\"eventType\":\"REQUEST_APPROVED\"}",
                 groupId.toString(), studentId.toString());
-        kafkaTemplate.send("request-approved", message);
+        send("request-approved", message);
+    }
+
+    private void send(String topic, String message) {
+        try {
+            kafkaTemplate.send(topic, message)
+                    .whenComplete((result, ex) -> {
+                        if (ex != null) {
+                            logger.warn("Failed to publish event to {}: {}", topic, ex.getMessage());
+                        }
+                    });
+        } catch (Exception e) {
+            logger.warn("Failed to enqueue event to {}: {}", topic, e.getMessage());
+        }
     }
 }
