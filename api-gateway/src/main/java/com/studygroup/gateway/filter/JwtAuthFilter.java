@@ -88,8 +88,7 @@ public class JwtAuthFilter implements GlobalFilter, Ordered, InitializingBean {
     }
 
     private boolean isPublicEndpoint(String path, String method) {
-        if (path.equals("/api/auth/register") || path.equals("/api/auth/login")
-                || path.equals("/api/auth/refresh")) {
+        if (isPublicAuthEndpoint(path)) {
             return true;
         }
 
@@ -105,6 +104,12 @@ public class JwtAuthFilter implements GlobalFilter, Ordered, InitializingBean {
         }
 
         return path.startsWith("/actuator");
+    }
+
+    private boolean isPublicAuthEndpoint(String path) {
+        return path.equals("/api/auth/register") || path.equals("/api/auth/register/")
+                || path.equals("/api/auth/login") || path.equals("/api/auth/login/")
+                || path.equals("/api/auth/refresh") || path.equals("/api/auth/refresh/");
     }
 
     private boolean isSingleResourcePath(String path, String prefix) {
