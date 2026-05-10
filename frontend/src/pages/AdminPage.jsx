@@ -30,7 +30,7 @@ const AdminPage = () => {
 
   const fetchPendingGroups = async () => {
     try {
-      const response = await groupApi.getAllGroups();
+      const response = await groupApi.getAllGroups(0, 50, true);
       const groups = response.data.content?.filter(g => g.status === 'PENDING') || [];
       setPendingGroups(groups);
     } catch (error) {

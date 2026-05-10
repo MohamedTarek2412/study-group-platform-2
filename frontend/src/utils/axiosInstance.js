@@ -26,8 +26,13 @@ axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+    const requestUrl = originalRequest?.url || '';
+    const isAuthEndpoint = requestUrl.includes('/api/auth/login')
+      || requestUrl.includes('/api/auth/register')
+      || requestUrl.includes('/api/auth/refresh')
+      || requestUrl.includes('/api/auth/validate');
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       originalRequest._retry = true;
 
       try {
@@ -50,7 +55,9 @@ axiosInstance.interceptors.response.use(
         // Refresh failed, logout user
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
-        window.location.href = '/login';
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
       }
     }
 

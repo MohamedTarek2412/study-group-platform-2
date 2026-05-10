@@ -1,12 +1,21 @@
+import axios from 'axios';
 import axiosInstance from '../utils/axiosInstance';
 
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+const publicClient = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: 10000,
+});
+
 const groupApi = {
-  getAllGroups: async (page = 0, size = 10) => {
-    return await axiosInstance.get(`/api/groups?page=${page}&size=${size}`);
+  getAllGroups: async (page = 0, size = 10, authenticated = false) => {
+    const client = authenticated ? axiosInstance : publicClient;
+    return await client.get(`/api/groups?page=${page}&size=${size}`);
   },
 
-  getGroup: async (id) => {
-    return await axiosInstance.get(`/api/groups/${id}`);
+  getGroup: async (id, authenticated = false) => {
+    const client = authenticated ? axiosInstance : publicClient;
+    return await client.get(`/api/groups/${id}`);
   },
 
   searchGroups: async (query, subject, location, meetingSchedule) => {
@@ -16,7 +25,7 @@ const groupApi = {
     if (location) params.append('location', location);
     if (meetingSchedule) params.append('meetingSchedule', meetingSchedule);
     
-    return await axiosInstance.get(`/api/groups/search?${params.toString()}`);
+    return await publicClient.get(`/api/groups/search?${params.toString()}`);
   },
 
   createGroup: async (groupData) => {

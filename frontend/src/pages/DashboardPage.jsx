@@ -56,10 +56,19 @@ const DashboardPage = () => {
   };
 
   const fetchPendingRequests = async () => {
+    if (user?.role !== 'CREATOR') {
+      setPendingRequests([]);
+      return;
+    }
+
     try {
       const response = await groupApi.getMyJoinRequests();
       setPendingRequests(response.data || []);
     } catch (error) {
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        setPendingRequests([]);
+        return;
+      }
       console.error('Failed to fetch pending requests:', error);
     }
   };
