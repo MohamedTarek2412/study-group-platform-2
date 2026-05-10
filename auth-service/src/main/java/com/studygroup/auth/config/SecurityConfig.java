@@ -35,6 +35,7 @@ public class SecurityConfig {
                         .requestMatchers("POST", "/api/auth/register").permitAll()
                         .requestMatchers("POST", "/api/auth/login").permitAll()
                         .requestMatchers("POST", "/api/auth/refresh").permitAll()
+                        .requestMatchers("/error").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers("GET", "/api/auth/validate").authenticated()
                         .anyRequest().authenticated()
