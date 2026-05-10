@@ -25,10 +25,10 @@ public class SecurityConfig {
                 .authorizeExchange(auth -> auth
                         .pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .pathMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login", "/api/auth/refresh").permitAll()
-                        .pathMatchers("GET", "/api/auth/validate").permitAll()
+                        .pathMatchers(HttpMethod.GET, "/api/auth/validate").permitAll()
                         .pathMatchers("/api/auth/register", "/api/auth/login", "/api/auth/refresh").permitAll()
                         .pathMatchers("/actuator/**").permitAll()
-                        .pathMatchers("GET", "/api/groups/**", "/api/users/**", "/api/posts/**", "/api/materials/**").permitAll()
+                        .pathMatchers(HttpMethod.GET, "/api/groups/**", "/api/users/**", "/api/posts/**", "/api/materials/**").permitAll()
                         .anyExchange().authenticated()
                 )
                 .build();

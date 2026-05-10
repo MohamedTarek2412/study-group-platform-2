@@ -3,6 +3,7 @@ package com.studygroup.discussion.config;
 import com.studygroup.discussion.filter.HeaderAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -29,9 +30,9 @@ public class SecurityConfig {
                 // CORS disabled - handled by API Gateway
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("GET", "/api/groups/**").permitAll()
-                        .requestMatchers("GET", "/api/posts/**").permitAll()
-                        .requestMatchers("GET", "/api/materials/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/groups/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/materials/**").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
                         .anyRequest().authenticated()
                 )

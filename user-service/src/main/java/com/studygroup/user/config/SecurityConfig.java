@@ -3,6 +3,7 @@ package com.studygroup.user.config;
 import com.studygroup.user.filter.HeaderAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -29,9 +30,9 @@ public class SecurityConfig {
                 // CORS disabled - handled by API Gateway
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("POST", "/api/users/bootstrap").permitAll()
-                        .requestMatchers("GET", "/api/users").permitAll()
-                        .requestMatchers("GET", "/api/users/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/users/bootstrap").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/users").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/users/**").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
                         .anyRequest().authenticated()
                 )
