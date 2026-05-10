@@ -24,11 +24,11 @@ public class LocalProfileBootstrapController {
         this.userService = userService;
     }
 
-    public record BootstrapRequest(UUID userId, String email) {}
+    public record BootstrapRequest(UUID userId, String email, String requestedRole) {}
 
     @PostMapping("/bootstrap")
     public ResponseEntity<Void> bootstrap(@RequestBody BootstrapRequest req) {
-        userService.createProfile(req.userId(), req.email());
+        userService.createProfile(req.userId(), req.email(), req.requestedRole());
         return ResponseEntity.ok().build();
     }
 }

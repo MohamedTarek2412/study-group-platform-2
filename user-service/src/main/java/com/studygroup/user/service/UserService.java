@@ -2,6 +2,7 @@ package com.studygroup.user.service;
 
 import com.studygroup.user.dto.CreatorApprovalDto;
 import com.studygroup.user.dto.UserProfileDto;
+import com.studygroup.user.kafka.CreatorApprovalProducer;
 import com.studygroup.user.model.UserProfile;
 import com.studygroup.user.repository.UserProfileRepository;
 import org.springframework.stereotype.Service;
@@ -15,9 +16,12 @@ import java.util.stream.Collectors;
 public class UserService {
 
     private final UserProfileRepository userProfileRepository;
+    private final CreatorApprovalProducer creatorApprovalProducer;
 
-    public UserService(UserProfileRepository userProfileRepository) {
+    public UserService(UserProfileRepository userProfileRepository,
+                       CreatorApprovalProducer creatorApprovalProducer) {
         this.userProfileRepository = userProfileRepository;
+        this.creatorApprovalProducer = creatorApprovalProducer;
     }
 
     public UserProfileDto getUserProfile(UUID userId) {
@@ -52,6 +56,7 @@ public class UserService {
         profile.setCreatorStatus("APPROVED");
         profile.setUpdatedAt(LocalDateTime.now());
         userProfileRepository.save(profile);
+        creatorApprovalProducer.publishCreatorApproved(userId);
     }
 
     public void rejectCreator(UUID userId) {
@@ -61,13 +66,22 @@ public class UserService {
         profile.setCreatorStatus("REJECTED");
         profile.setUpdatedAt(LocalDateTime.now());
         userProfileRepository.save(profile);
+        creatorApprovalProducer.publishCreatorRejected(userId);
     }
 
     public UserProfile createProfile(UUID userId, String email) {
+        return createProfile(userId, email, "STUDENT");
+    }
+
+    public UserProfile createProfile(UUID userId, String email, String requestedRole) {
+        if (userProfileRepository.findByUserId(userId).isPresent()) {
+            return userProfileRepository.findByUserId(userId).get();
+        }
+
         UserProfile profile = new UserProfile();
         profile.setId(UUID.randomUUID());
         profile.setUserId(userId);
-        profile.setCreatorStatus("NONE");
+        profile.setCreatorStatus("CREATOR".equalsIgnoreCase(requestedRole) ? "PENDING" : "NONE");
         profile.setUpdatedAt(LocalDateTime.now());
         
         return userProfileRepository.save(profile);

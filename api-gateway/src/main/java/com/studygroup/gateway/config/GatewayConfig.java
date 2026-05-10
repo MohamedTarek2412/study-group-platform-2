@@ -34,6 +34,8 @@ public class GatewayConfig {
                         .uri(authUri))
                 .route("user-service", r -> r.path("/api/users/**")
                         .uri(userUri))
+                .route("join-request-service", r -> r.path("/api/join-requests/**")
+                        .uri(groupUri))
                 .route("group-service", r -> r.path("/api/groups/**")
                         .uri(groupUri))
                 .build();

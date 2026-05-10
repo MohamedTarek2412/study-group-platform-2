@@ -53,25 +53,26 @@ public class AuthService {
         user.setEmail(request.getEmail());
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         
-        Role role = Role.STUDENT;
+        Role requestedRole = Role.STUDENT;
         try {
-            role = Role.valueOf(request.getRole().toUpperCase());
+            requestedRole = Role.valueOf(request.getRole().toUpperCase());
         } catch (IllegalArgumentException e) {
-            role = Role.STUDENT;
+            requestedRole = Role.STUDENT;
         }
-        if (role == Role.ADMIN) {
-            role = Role.STUDENT;
+        if (requestedRole == Role.ADMIN) {
+            requestedRole = Role.STUDENT;
         }
-        user.setRole(role);
+        Role effectiveRole = requestedRole == Role.CREATOR ? Role.STUDENT : requestedRole;
+        user.setRole(effectiveRole);
         user.setStatus("ACTIVE");
         user.setCreatedAt(LocalDateTime.now());
 
         user = userRepository.save(user);
 
         // Publish user registered event
-        userEventProducer.publishUserRegistered(user.getId(), user.getEmail());
+        userEventProducer.publishUserRegistered(user.getId(), user.getEmail(), requestedRole.name());
         if (localUserProfileBootstrap != null) {
-            localUserProfileBootstrap.sync(user.getId(), user.getEmail());
+            localUserProfileBootstrap.sync(user.getId(), user.getEmail(), requestedRole.name());
         }
 
         String token = jwtService.generateToken(user);

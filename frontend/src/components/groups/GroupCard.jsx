@@ -38,6 +38,11 @@ const GroupCard = ({ group }) => {
           <Users className="h-4 w-4 mr-2" />
           <span>Max {group.maxMembers} members</span>
         </div>
+
+        <div className="flex items-center text-sm text-gray-500">
+          <Users className="h-4 w-4 mr-2" />
+          <span>{group.creatorName || `Creator ${group.creatorId?.slice(0, 8)}`}</span>
+        </div>
       </div>
       
       <div className="flex justify-between items-center">

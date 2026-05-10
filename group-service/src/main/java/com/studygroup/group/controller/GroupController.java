@@ -24,7 +24,12 @@ public class GroupController {
     }
 
     @GetMapping
-    public ResponseEntity<PageResponse<GroupDto>> getAllGroups(Pageable pageable) {
+    public ResponseEntity<PageResponse<GroupDto>> getAllGroups(
+            Pageable pageable,
+            @RequestHeader(value = "X-User-Role", required = false) String role) {
+        if ("ADMIN".equals(role)) {
+            return ResponseEntity.ok(PageResponse.from(groupService.getAllGroupsForAdmin(pageable)));
+        }
         return ResponseEntity.ok(PageResponse.from(groupService.getAllGroups(pageable)));
     }
 
@@ -37,8 +42,15 @@ public class GroupController {
     public ResponseEntity<List<GroupDto>> searchGroups(
             @RequestParam(required = false) String q,
             @RequestParam(required = false) String subject,
-            @RequestParam(required = false) String location) {
-        return ResponseEntity.ok(groupService.searchGroups(q, subject, location));
+            @RequestParam(required = false) String location,
+            @RequestParam(required = false) String meetingSchedule) {
+        return ResponseEntity.ok(groupService.searchGroups(q, subject, location, meetingSchedule));
+    }
+
+    @GetMapping("/creator/me")
+    @PreAuthorize("hasRole('CREATOR')")
+    public ResponseEntity<List<GroupDto>> getMyCreatedGroups(@RequestHeader("X-User-Id") String creatorId) {
+        return ResponseEntity.ok(groupService.getGroupsByCreator(UUID.fromString(creatorId)));
     }
 
     @PostMapping

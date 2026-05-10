@@ -30,13 +30,18 @@ public class GroupService {
                 .map(this::convertToDto);
     }
 
+    public Page<GroupDto> getAllGroupsForAdmin(Pageable pageable) {
+        return groupRepository.findAll(pageable)
+                .map(this::convertToDto);
+    }
+
     public GroupDto getGroup(UUID id) {
         Group group = groupRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Group not found"));
         return convertToDto(group);
     }
 
-    public List<GroupDto> searchGroups(String query, String subject, String location) {
+    public List<GroupDto> searchGroups(String query, String subject, String location, String meetingSchedule) {
         List<Group> groups;
         
         if (query != null && !query.trim().isEmpty()) {
@@ -45,11 +50,19 @@ public class GroupService {
             groups = groupRepository.findBySubjectAndStatus(subject.trim(), "APPROVED");
         } else if (location != null && !location.trim().isEmpty()) {
             groups = groupRepository.findByLocationAndStatus(location.trim(), "APPROVED");
+        } else if (meetingSchedule != null && !meetingSchedule.trim().isEmpty()) {
+            groups = groupRepository.findByMeetingScheduleContainingIgnoreCaseAndStatus(meetingSchedule.trim(), "APPROVED");
         } else {
             groups = groupRepository.findByStatus("APPROVED");
         }
         
         return groups.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
+    public List<GroupDto> getGroupsByCreator(UUID creatorId) {
+        return groupRepository.findByCreatorId(creatorId).stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
@@ -127,6 +140,7 @@ public class GroupService {
         dto.setMeetingSchedule(group.getMeetingSchedule());
         dto.setMaxMembers(group.getMaxMembers());
         dto.setCreatorId(group.getCreatorId());
+        dto.setCreatorName("Creator " + group.getCreatorId().toString().substring(0, 8));
         dto.setStatus(group.getStatus());
         dto.setCreatedAt(group.getCreatedAt());
         return dto;

@@ -9,17 +9,26 @@ const groupApi = {
     return await axiosInstance.get(`/api/groups/${id}`);
   },
 
-  searchGroups: async (query, subject, location) => {
+  searchGroups: async (query, subject, location, meetingSchedule) => {
     const params = new URLSearchParams();
     if (query) params.append('q', query);
     if (subject) params.append('subject', subject);
     if (location) params.append('location', location);
+    if (meetingSchedule) params.append('meetingSchedule', meetingSchedule);
     
     return await axiosInstance.get(`/api/groups/search?${params.toString()}`);
   },
 
   createGroup: async (groupData) => {
     return await axiosInstance.post('/api/groups', groupData);
+  },
+
+  getMyCreatedGroups: async () => {
+    return await axiosInstance.get('/api/groups/creator/me');
+  },
+
+  getMyJoinRequests: async () => {
+    return await axiosInstance.get('/api/join-requests/creator/me');
   },
 
   updateGroup: async (id, groupData) => {

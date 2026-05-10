@@ -28,6 +28,8 @@ public class GroupDto {
 
     private UUID creatorId;
 
+    private String creatorName;
+
     private String status; // PENDING, APPROVED, REJECTED, ARCHIVED
 
     private LocalDateTime createdAt;
@@ -73,6 +75,9 @@ public class GroupDto {
 
     public UUID getCreatorId() { return creatorId; }
     public void setCreatorId(UUID creatorId) { this.creatorId = creatorId; }
+
+    public String getCreatorName() { return creatorName; }
+    public void setCreatorName(String creatorName) { this.creatorName = creatorName; }
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }

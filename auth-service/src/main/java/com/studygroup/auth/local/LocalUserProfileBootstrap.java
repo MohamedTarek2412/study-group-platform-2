@@ -23,11 +23,11 @@ public class LocalUserProfileBootstrap {
     @Value("${studygroup.user-service-url:http://localhost:8082}")
     private String userServiceUrl;
 
-    public void sync(UUID userId, String email) {
+    public void sync(UUID userId, String email, String requestedRole) {
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            var body = new BootstrapBody(userId, email);
+            var body = new BootstrapBody(userId, email, requestedRole);
             restTemplate.postForEntity(
                     userServiceUrl + "/api/users/bootstrap",
                     new HttpEntity<>(body, headers),
@@ -37,5 +37,5 @@ public class LocalUserProfileBootstrap {
         }
     }
 
-    public record BootstrapBody(UUID userId, String email) {}
+    public record BootstrapBody(UUID userId, String email, String requestedRole) {}
 }

@@ -25,11 +25,7 @@ function App() {
               <Route path="/groups" element={<GroupsPage />} />
               <Route 
                 path="/groups/:id" 
-                element={
-                  <ProtectedRoute>
-                    <GroupDetailPage />
-                  </ProtectedRoute>
-                } 
+                element={<GroupDetailPage />}
               />
               <Route 
                 path="/dashboard" 

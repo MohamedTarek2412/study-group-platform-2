@@ -19,12 +19,12 @@ public class UserEventProducer {
         this.kafkaTemplate = kafkaTemplate;
     }
 
-    public void publishUserRegistered(UUID userId, String email) {
+    public void publishUserRegistered(UUID userId, String email, String requestedRole) {
         if (kafkaTemplate == null) {
             return;
         }
-        String message = String.format("{\"userId\":\"%s\",\"email\":\"%s\",\"eventType\":\"USER_REGISTERED\"}",
-                userId.toString(), email);
+        String message = String.format("{\"userId\":\"%s\",\"email\":\"%s\",\"requestedRole\":\"%s\",\"eventType\":\"USER_REGISTERED\"}",
+                userId.toString(), email, requestedRole);
         try {
             kafkaTemplate.send("user-registered", message)
                     .whenComplete((result, ex) -> {

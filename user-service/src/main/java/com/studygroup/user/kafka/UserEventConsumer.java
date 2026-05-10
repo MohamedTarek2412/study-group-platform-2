@@ -31,9 +31,12 @@ public class UserEventConsumer {
             JsonNode jsonNode = objectMapper.readTree(message);
             String userIdStr = jsonNode.get("userId").asText();
             String email = jsonNode.get("email").asText();
+            String requestedRole = jsonNode.hasNonNull("requestedRole")
+                    ? jsonNode.get("requestedRole").asText()
+                    : "STUDENT";
             
             UUID userId = UUID.fromString(userIdStr);
-            userService.createProfile(userId, email);
+            userService.createProfile(userId, email, requestedRole);
             
             logger.info("Created user profile for user: {}", userId);
         } catch (Exception e) {

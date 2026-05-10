@@ -20,7 +20,11 @@ public interface GroupRepository extends JpaRepository<Group, UUID> {
 
     List<Group> findByLocationAndStatus(String location, String status);
 
+    List<Group> findByMeetingScheduleContainingIgnoreCaseAndStatus(String meetingSchedule, String status);
+
     List<Group> findByStatus(String status);
+
+    List<Group> findByCreatorId(UUID creatorId);
 
     @Query("SELECT g FROM StudyGroup g WHERE g.status = :status AND " +
            "(LOWER(g.name) LIKE LOWER(CONCAT('%', :query, '%')) OR " +

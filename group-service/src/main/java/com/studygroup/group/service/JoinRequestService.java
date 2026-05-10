@@ -73,6 +73,13 @@ public class JoinRequestService {
                 .collect(Collectors.toList());
     }
 
+    public List<JoinRequestDto> getJoinRequestsForCreator(UUID creatorId) {
+        return groupRepository.findByCreatorId(creatorId).stream()
+                .flatMap(group -> joinRequestRepository.findByGroupIdAndStatus(group.getId(), "PENDING").stream())
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+    }
+
     public void acceptJoinRequest(UUID requestId) {
         JoinRequest joinRequest = joinRequestRepository.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("Join request not found"));

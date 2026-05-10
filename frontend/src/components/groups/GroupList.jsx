@@ -3,14 +3,14 @@ import GroupCard from './GroupCard';
 import LoadingSpinner from '../common/LoadingSpinner';
 import groupApi from '../../api/groupApi';
 
-const GroupList = ({ searchQuery, subjectFilter, locationFilter }) => {
+const GroupList = ({ searchQuery, subjectFilter, locationFilter, scheduleFilter, refreshKey = 0 }) => {
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
     fetchGroups();
-  }, [searchQuery, subjectFilter, locationFilter]);
+  }, [searchQuery, subjectFilter, locationFilter, scheduleFilter, refreshKey]);
 
   const fetchGroups = async () => {
     try {
@@ -18,7 +18,7 @@ const GroupList = ({ searchQuery, subjectFilter, locationFilter }) => {
       let response;
       
       if (searchQuery || subjectFilter || locationFilter) {
-        response = await groupApi.searchGroups(searchQuery, subjectFilter, locationFilter);
+        response = await groupApi.searchGroups(searchQuery, subjectFilter, locationFilter, scheduleFilter);
       } else {
         response = await groupApi.getAllGroups();
       }

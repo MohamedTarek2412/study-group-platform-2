@@ -43,9 +43,13 @@ const DashboardPage = () => {
 
   const fetchMyGroups = async () => {
     try {
-      // This would typically be a specific endpoint for user's groups
-      const response = await groupApi.getAllGroups();
-      setMyGroups(response.data.content?.slice(0, 3) || []);
+      if (user.role === 'CREATOR') {
+        const response = await groupApi.getMyCreatedGroups();
+        setMyGroups(response.data || []);
+      } else {
+        const response = await groupApi.getAllGroups();
+        setMyGroups(response.data.content?.slice(0, 3) || []);
+      }
     } catch (error) {
       console.error('Failed to fetch groups:', error);
     }
@@ -53,11 +57,23 @@ const DashboardPage = () => {
 
   const fetchPendingRequests = async () => {
     try {
-      // This would fetch pending join requests for creator's groups
-      // For now, we'll use mock data
-      setPendingRequests([]);
+      const response = await groupApi.getMyJoinRequests();
+      setPendingRequests(response.data || []);
     } catch (error) {
       console.error('Failed to fetch pending requests:', error);
+    }
+  };
+
+  const handleJoinRequest = async (request, action) => {
+    try {
+      if (action === 'accept') {
+        await groupApi.acceptJoinRequest(request.groupId, request.id);
+      } else {
+        await groupApi.rejectJoinRequest(request.groupId, request.id);
+      }
+      setPendingRequests(pendingRequests.filter((item) => item.id !== request.id));
+    } catch (error) {
+      alert(error.response?.data?.message || 'Failed to update join request');
     }
   };
 
@@ -79,6 +95,16 @@ const DashboardPage = () => {
         <p className="text-blue-100">
           {user?.role === 'CREATOR' ? 'Manage your groups and review join requests' : 'Track your learning progress and group activities'}
         </p>
+        {userProfile?.creatorStatus === 'PENDING' && (
+          <p className="mt-3 bg-white/20 px-3 py-2 rounded">
+            Your Group Creator account is waiting for admin approval.
+          </p>
+        )}
+        {userProfile?.creatorStatus === 'APPROVED' && user?.role !== 'CREATOR' && (
+          <p className="mt-3 bg-white/20 px-3 py-2 rounded">
+            Your creator account was approved. Log out and log back in to unlock creator tools.
+          </p>
+        )}
       </div>
 
       {/* Stats Cards */}
@@ -164,10 +190,16 @@ const DashboardPage = () => {
                     <p className="text-sm text-gray-600">Wants to join: {request.groupName}</p>
                   </div>
                   <div className="space-x-2">
-                    <button className="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600">
+                    <button
+                      onClick={() => handleJoinRequest(request, 'accept')}
+                      className="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600"
+                    >
                       Accept
                     </button>
-                    <button className="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600">
+                    <button
+                      onClick={() => handleJoinRequest(request, 'reject')}
+                      className="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600"
+                    >
                       Reject
                     </button>
                   </div>
